@@ -8,6 +8,6 @@ public interface ServerInterface extends Remote {
     public String CadastrarUsuario(String userName, PublicKey publicKey, ClientInterface clientInterface) throws RemoteException;
     public String CadastrarEnquete(String userName, String tituloDaEnquete, String localDoEvento, LocalDateTime[] propostasDeHorario, LocalDateTime dataLimite) throws RemoteException;
     public String CadastrarVoto(String userName, Integer idDaEnquete, Integer[] propostasDeHorario) throws RemoteException;
-    public String ConsultarEnquete(String userName, Integer idDaEnquete) throws RemoteException;
+    public String ConsultarEnquete(String userName, Integer idDaEnquete, byte[] mensagem) throws RemoteException;
     public void FinalizaEnquete(Integer idDaEnquete) throws RemoteException;
 }

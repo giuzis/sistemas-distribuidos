@@ -23,7 +23,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         try{
             clientesCadastrados.put(userName, new ClientData(publicKey, clientInterface));
             System.out.println("Usuario " + userName + " cadastrado com sucesso.\n");
-            clientesCadastrados.get(userName).print();
             return "Usuario cadastrado com sucesso.\n";
         } catch (Exception e) {
             return "Não foi possível cadastrar novo usuário.\n";
@@ -33,11 +32,14 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public String CadastrarEnquete(String userName, String tituloDaEnquete, String localDoEvento, LocalDateTime[] propostasDeHorario, LocalDateTime dataDeEncerramento) throws RemoteException{
         numeroDeEnquetesCadastradas++;
         Enquete novaEnquete = new Enquete(numeroDeEnquetesCadastradas, userName, tituloDaEnquete, localDoEvento, propostasDeHorario, dataDeEncerramento);
+        
+        String response = novaEnquete.mensagemCadastro();
+        
         for ( String cli : clientesCadastrados.keySet() ) {
             if(!cli.equals(userName)){
                 try{
                     ClientData cliente = clientesCadastrados.get(cli);
-                    cliente.client.notificaNovaEnquete(novaEnquete.nomeDaEnquete, novaEnquete.donoDaEnquete, novaEnquete.horariosPropostos, novaEnquete.dataEncerramento, localDoEvento, numeroDeEnquetesCadastradas);
+                    cliente.client.notifica(response);
                     novaEnquete.adicionaParticipante(cli);
                 } catch (Exception e) {
                     System.out.println(e);
@@ -65,34 +67,39 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
     }
 
-    public String ConsultarEnquete(String userName, Integer idDaEnquete) throws RemoteException{
-        return "";
+    public String ConsultarEnquete(String userName, Integer idDaEnquete, byte[] mensagem) throws RemoteException{
+        try{
+            Enquete enquete = enquetesCadastradas.get(idDaEnquete);
+            Signature clientSig = Signature.getInstance("DSA");
+            clientSig.initVerify(clientesCadastrados.get(userName).publicKey);  
+            clientSig.update(userName.getBytes());
+            if(clientSig.verify(mensagem)){
+                return enquete.consultaEnquete(userName);
+            }
+            else{
+                return "\nNao foi possivel verificar a assinatura.";
+            }
+        } catch (Exception e){
+            System.out.println(e);
+            return "\nNao foi possivel verificar a assinatura.";
+        }
+        
     }
 
     public void FinalizaEnquete(Integer idDaEnquete) throws RemoteException{
         Enquete enquete = enquetesCadastradas.get(idDaEnquete);
-        String response = "-------------------------------------------------------------\n" +
-        "Enquete " + enquete.nomeDaEnquete + " finalizada. \n";
-        String horarioFinal = enquete.horarioMaisVotado();
-        if(horarioFinal == ""){
-            response += "Nenhum voto contabilizado. \n";
-        }
-        else{
-            response += "O horario escolhido foi "  + horarioFinal + ".";
-        }
+        
+        String response = enquete.finalizaEnquete();
 
-        for( String name:enquete.participantesPorVoto.keySet()){
-            if(enquete.participantesPorVoto.get(name)){
-                clientesCadastrados.get(name).client.notificaEncerramentoEnquete(response);
-            }
+        for( String name:enquete.getParticipantesQueVotaram()){
+            clientesCadastrados.get(name).client.notifica(response);
         }
         
-        clientesCadastrados.get(enquete.donoDaEnquete).client.notificaEncerramentoEnquete(response);
+        clientesCadastrados.get(enquete.getDonoDaEnquete()).client.notifica(response);
 
-        enquetesCadastradas.remove(idDaEnquete);
         enquetesTimeOut.removeTimeOut(idDaEnquete);
 
-        System.out.println("Enquete "+idDaEnquete+" finalizada com sucesso\n");
+        System.out.println("Enquete "+idDaEnquete+" finalizada com sucesso.\n");
     }
 
     public static void main (String[] args) throws RemoteException{

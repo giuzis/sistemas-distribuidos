@@ -11,20 +11,16 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     public Client() throws RemoteException{}
 
-    public void notificaNovaEnquete(String nomeDaEnquete, String donoDaEnquete, LocalDateTime[] horariosPropostos, LocalDateTime dataDeEncerramento, String localDoEvento, Integer idDaEnquete) throws RemoteException{
-        System.out.println("-----------------------------------------------------------------------------------------------");
-        System.out.println(donoDaEnquete + " quer saber qual o melhor horario para o evento " + nomeDaEnquete + " no local " + localDoEvento + ".");
-        System.out.println("Use o identificador '" + String.format("%d", idDaEnquete) + "' para votar.");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-
-        System.out.println("\nHorarios propostos:");
-        for(int i = 0; i < horariosPropostos.length; i++){
-            System.out.println("\t" + String.format("%d", i) + ": " + horariosPropostos[i].format(formatter));
-        }   
+    public void notifica(String infos) throws RemoteException{
+        System.out.println(infos);
+        printMenu();
     }
 
-    public void notificaEncerramentoEnquete(String infos) throws RemoteException{
-        System.out.println(infos);
+    static private void printMenu(){
+        System.out.println("0 - Para sair");
+        System.out.println("1 - Criar enquete");
+        System.out.println("2 - Votar na enquete");
+        System.out.println("3 - Consultar enquetes");
     }
 
     public static void main(String[] args) throws RemoteException{
@@ -44,6 +40,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	        KeyPair    keyP = kpg.generateKeyPair();                        // gera o par de chaves
 	        PublicKey  pubKey = keyP.getPublic();                           // pega a chave publica
 	        PrivateKey priKey = keyP.getPrivate();                          // pega a chave privada
+            sig.initSign(priKey);                                           // coloca a chave privada no incializador
             
             System.out.println("Primeiramente digite seu nome para receber novas enquetes.");
             String name = scan.nextLine();
@@ -53,10 +50,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
             while(!finaliza){
 
-                System.out.println("0 - Para sair");
-				System.out.println("1 - Criar enquete");
-				System.out.println("2 - Votar na enquete");
-				System.out.println("3 - Consultar enquetes");
+                printMenu();
 
 				option = scan.nextInt();
                 scan.nextLine();
@@ -92,7 +86,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
                         System.out.print("Digite o ID da enquete: ");
                         int id = scan.nextInt();
                         scan.nextLine();
-                        System.out.print("Informe os IDs do horario que voce podera comparecer separados por espaço: ");
+                        System.out.print("Informe os IDs do horario que voce podera comparecer separados por espaco: ");
                         String stringHorariosVotados = scan.nextLine();
                         String[] horariosVotados = stringHorariosVotados.split(" ");
                         Integer[] intHorariosVotados = new Integer[horariosVotados.length];
@@ -101,6 +95,12 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
                         }
                         System.out.println(s.CadastrarVoto(name, id, intHorariosVotados));
                         break;
+                    case 3:
+                        System.out.print("Digite o ID da enquete: ");
+                        int id2 = scan.nextInt();
+                        sig.update(name.getBytes()); 
+                        byte[] assinatura = sig.sign();
+                        System.out.println(s.ConsultarEnquete(name, id2, assinatura));
                     default:
                         break;
                 }
@@ -110,6 +110,5 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();
         }
-
     }
 }
