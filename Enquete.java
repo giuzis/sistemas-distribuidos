@@ -138,7 +138,7 @@ public class Enquete {
     Retorno : (String) informacoes da enquete
     */
     public String consultaEnquete (String userName){
-        if(!(this.participantesPorVoto.containsKey(userName) || this.donoDaEnquete.equals(userName))) return "Voce nao tem permissao para acessar essa enquete.";
+        if(!(this.participantesPorVoto.get(userName) || this.donoDaEnquete.equals(userName))) return "Voce nao tem permissao para acessar essa enquete.";
         String mensagem = "\n--------Informacoes da enquete---------" +
         "\nID: " + this.idDaEnquete +
         "\nNome da enquete: " + this.nomeDaEnquete +
