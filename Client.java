@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.security.*;
+import java.io.Console;
 import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.*;
@@ -11,6 +12,12 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     public Client() throws RemoteException{}
 
+
+    /* 
+    Metodo utilizado pelo servidor para enviar notificacoes assincronas para o cliente.
+    Parametros : (String) informacoes da notificacao
+    Retorno : -
+    */
     public void notifica(String infos) throws RemoteException{
         System.out.println(infos);
         printMenu();
@@ -26,25 +33,25 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
     public static void main(String[] args) throws RemoteException{
         try {
             boolean finaliza = false;
-            Scanner scan = new Scanner(System.in);                         // inicializa o scanner
+            Scanner scan = new Scanner(System.in);                                  // inicializa o scanner
 
-			ClientInterface c = new Client();	
-            Registry registry = LocateRegistry.getRegistry(10099);
-            ServerInterface s = (ServerInterface) registry.lookup("Enquete");
+			ClientInterface c = new Client();	                                    // instancia novo cliente
+            Registry registry = LocateRegistry.getRegistry(10099);                  
+            ServerInterface s = (ServerInterface) registry.lookup("Enquete");       // procura referência do objeto remoto "Enquete"
 
              //Geração das chaves públicas e privadas
-			Signature sig = Signature.getInstance("DSA");                   // instancia um objeto de criptografia DSA
-	        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");     // instancia um gerador de chaves
-	        SecureRandom secRan = new SecureRandom();                       // obtem um número aleatório que vai servir como seed
-	        kpg.initialize(512,secRan);                                     // inicializa o gerador de chaves com o tamanho e a seed
-	        KeyPair    keyP = kpg.generateKeyPair();                        // gera o par de chaves
-	        PublicKey  pubKey = keyP.getPublic();                           // pega a chave publica
-	        PrivateKey priKey = keyP.getPrivate();                          // pega a chave privada
-            sig.initSign(priKey);                                           // coloca a chave privada no incializador
+			Signature sig = Signature.getInstance("DSA");                           // instancia um objeto de criptografia DSA
+	        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");             // instancia um gerador de chaves
+	        SecureRandom secRan = new SecureRandom();                               // obtem um número aleatório que vai servir como seed
+	        kpg.initialize(512,secRan);                                             // inicializa o gerador de chaves com o tamanho e a seed
+	        KeyPair    keyP = kpg.generateKeyPair();                                // gera o par de chaves
+	        PublicKey  pubKey = keyP.getPublic();                                   // pega a chave publica
+	        PrivateKey priKey = keyP.getPrivate();                                  // pega a chave privada
+            sig.initSign(priKey);                                                   // coloca a chave privada no inicializador
             
             System.out.println("Primeiramente digite seu nome para receber novas enquetes.");
             String name = scan.nextLine();
-            System.out.println(s.CadastrarUsuario(name, pubKey, c));        // cadastra o usuário para receber enquetes
+            System.out.println(s.CadastrarUsuario(name, pubKey, c));                // cadastra o usuario atraves do nome para receber enquetes
             
             int option = 8;
 
@@ -72,15 +79,29 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
                         LocalDateTime[] horariosPropostos;
                         horariosPropostos = new LocalDateTime[quantidadeDeHorarios];
-                        for(int i = 0; i < quantidadeDeHorarios; i++){
+                        int j = 0;
+                        while(j < quantidadeDeHorarios){
                             System.out.print("Digite o horario no formato dd-MM-yyyy HH:mm : ");
-                            horariosPropostos[i] = LocalDateTime.parse(scan.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+                            try{
+                                horariosPropostos[j] = LocalDateTime.parse(scan.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+                                j++;
+                            } catch(Exception e){
+                                System.out.println("Formato errado, tente novamente. ");
+                            }
                         }
 
-                        System.out.print("Entre a data de encerramento da enquete no formato dd-MM-yyyy HH:mm : ");
-                        LocalDateTime dataDeEncerramento = LocalDateTime.parse(scan.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
-
-                        System.out.println(s.CadastrarEnquete(name, nomeDaEnquete, localDoEvento, horariosPropostos, dataDeEncerramento));
+                        boolean saidoloop = false;
+                        LocalDateTime dataDeEncerramento = LocalDateTime.now();
+                        while(!saidoloop){
+                            System.out.print("Entre a data de encerramento da enquete no formato dd-MM-yyyy HH:mm : ");
+                            try{
+                                dataDeEncerramento = LocalDateTime.parse(scan.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+                                saidoloop = true;
+                            } catch(Exception e){
+                                System.out.println("Formato errado, tente novamente. ");
+                            }
+                        }
+                        System.out.println(s.CadastrarEnquete(name, nomeDaEnquete, localDoEvento, horariosPropostos, dataDeEncerramento));  // invoca metodo do servidor
                         break;
                     case 2:
                         System.out.print("Digite o ID da enquete: ");

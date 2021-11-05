@@ -19,6 +19,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         enquetesCadastradas = new HashMap<Integer,Enquete>();
     }
 
+    /* 
+    Cadastra o usuario para receber novas enquetes
+    Parametro : (String) nome do usuario
+                (PublicKey) chave publica do cliente
+                (ClientInterface) referencia de objeto remoto do cliente
+    Retorno : (String) mensagem de confirmacao
+    */
     public String CadastrarUsuario(String userName, PublicKey publicKey, ClientInterface clientInterface) throws RemoteException{
         try{
             clientesCadastrados.put(userName, new ClientData(publicKey, clientInterface));
@@ -29,6 +36,15 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
     } 
 
+    /* 
+    Cadastra nova enquete e informa usuarios participantes
+    Parametro : (String) nome do usuario
+                (String) titulo da enquete
+                (String) local do evento
+                (LocalDateTime[]) propostas de horario do dono da enquete
+                (LocalDateTime) data de encerramento da enquete
+    Retorno : (String) mensagem de confirmacao
+    */
     public String CadastrarEnquete(String userName, String tituloDaEnquete, String localDoEvento, LocalDateTime[] propostasDeHorario, LocalDateTime dataDeEncerramento) throws RemoteException{
         numeroDeEnquetesCadastradas++;
         Enquete novaEnquete = new Enquete(numeroDeEnquetesCadastradas, userName, tituloDaEnquete, localDoEvento, propostasDeHorario, dataDeEncerramento);
@@ -53,6 +69,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         return "Enquete " + numeroDeEnquetesCadastradas + " cadastrada com sucesso.\n";
     }
 
+    /* 
+    Cadastra voto na enquete e verifica se a enquete foi encerrada
+    Parametro : (String) nome do usuario votante
+                (Integer) id da enquete
+                (Integer[]) id das propostas de horario escolhidas pelo votante
+    Retorno : (String) mensagem de confirmacao
+    */
     public String CadastrarVoto(String userName, Integer idDaEnquete, Integer[] propostasDeHorario) throws RemoteException{
         try{
             if(!enquetesCadastradas.containsKey(idDaEnquete)) return "Enquete nao encontrada.\n";
@@ -67,6 +90,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
     }
 
+    /* 
+    Consulta informacoes sobre a enquete, fazendo uma verificacao atraves da assiantura digital de uma mensagem
+    Parametro : (String) nome do usuario
+                (Integer) id da enquete
+                (byte[]) mensagem criptografada
+    Retorno : (String) informacoes da enquete
+    */
     public String ConsultarEnquete(String userName, Integer idDaEnquete, byte[] mensagem) throws RemoteException{
         try{
             Enquete enquete = enquetesCadastradas.get(idDaEnquete);
@@ -86,6 +116,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         
     }
 
+    /* 
+    Finaliza a enquete e envia notificao para os clientes cadastrados e o dono da enquete
+    A enquete pode ser finalizada por timeout ou por finalziacao dos votos
+    Parametro : (Integer) id da enquete
+    Retorno : -
+    */
     public void FinalizaEnquete(Integer idDaEnquete) throws RemoteException{
         Enquete enquete = enquetesCadastradas.get(idDaEnquete);
         
@@ -106,10 +142,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         try {
 			Server s = new Server();
 			Registry registry = LocateRegistry.createRegistry(10099);
-			registry.bind("Enquete",s);
+			registry.bind("Enquete",s);                                 // registra o nome e a referencia do servidor no servico de nomes
 			System.out.println("Servidor pronto.");
 
-            enquetesTimeOut = new EnquetesTimeOut(s);
+            enquetesTimeOut = new EnquetesTimeOut(s);                   // inicializa thread que fica monitorando as enquetes
 		} catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

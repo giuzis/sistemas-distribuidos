@@ -38,11 +38,22 @@ public class Enquete {
 
     }
 
+    /* 
+    Cadastra os participantes votantes na enquete e indica que estao com voto pendente
+    Parametros : (string) nome do participante
+    Retorno : -
+    */
     public void adicionaParticipante(String _nomeParticipante){
         this.participantesPorVoto.put(_nomeParticipante, false);
         System.out.println("Participante " + _nomeParticipante + " adicionado a enquete " + this.nomeDaEnquete + ".\n");
     }
 
+    /* 
+    Cadastra os votos do usuario
+    Parametros: (string) nome do usuario
+                (integer[]) ids dos horarios escolhidos
+    Retorno:    (string) mensagem para o cliente
+    */
     public String cadastraVotos(String name, Integer[] votos){
         try{
             if(!this.participantesPorVoto.containsKey(name)) return "Voce nao esta autorizado a votar nessa enquete.\n";
@@ -62,6 +73,11 @@ public class Enquete {
         }
     }
 
+    /* 
+    Obtem o horario mais votado
+    Parametros : -
+    Retorno : (string) horario mais votado
+    */
     public String horarioMaisVotado(){
         Integer indice_do_maior = -1, maior_valor = -1;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -80,6 +96,11 @@ public class Enquete {
         }
     }
 
+    /* 
+    Verifica se todos os participantes votantes votaram
+    Parametro : -
+    Retorno : (boolean) true = "todos votaram" ; false = "nem todos votaram"
+    */
     public boolean todosVotaram(){
         for( String name:this.participantesPorVoto.keySet()){
             if(!this.participantesPorVoto.get(name)){
@@ -89,6 +110,11 @@ public class Enquete {
         return true;
     }
 
+    /* 
+    Obtem lista de nomes de participantes que votaram
+    Parametro : -
+    Retorno : (List<String>) lista com nomes dos participantes que votaram
+    */
     public List<String> getParticipantesQueVotaram(){
         List<String> response = new ArrayList<String>();        ;
         for(String name : this.participantesPorVoto.keySet()){
@@ -97,10 +123,20 @@ public class Enquete {
         return response;
     }
 
+    /* 
+    Obtem o nome do dono da enquete
+    Parametro : -
+    Retorno : (String) nome do dono da enquete
+    */
     public String getDonoDaEnquete(){
         return this.donoDaEnquete;
     }
 
+    /* 
+    Obtem as informacoes a respeito da enquete, se o usuario for participante da enquete
+    Parametros : (String) nome do usuario
+    Retorno : (String) informacoes da enquete
+    */
     public String consultaEnquete (String userName){
         if(!(this.participantesPorVoto.containsKey(userName) || this.donoDaEnquete.equals(userName))) return "Voce nao tem permissao para acessar essa enquete.";
         String mensagem = "\n--------Informacoes da enquete---------" +
@@ -121,6 +157,11 @@ public class Enquete {
         return mensagem;
     }
 
+    /* 
+    Finaliza a enquete
+    Parametro : -
+    Retorno : (String) informacoes do resultado da enquete
+    */
     public String finalizaEnquete(){
         String response = "\n---------------------------------------\n" +
         "Enquete " + this.nomeDaEnquete + " finalizada. \n";
@@ -136,6 +177,11 @@ public class Enquete {
         return response;
     }
 
+    /* 
+    Obtem indicando que o usuario foi cadastrado na enquete
+    Parametro : -
+    Retorno : (String) informacoes respectivas a enquete
+    */
     public String mensagemCadastro(){
         String response = "\n---------------------------------------\n" +
         this.donoDaEnquete + " quer saber qual o melhor horario para o evento " + this.nomeDaEnquete + " no local " + this.localDoEvento + ".\n" +
