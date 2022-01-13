@@ -4,6 +4,7 @@ import java.time.format.*;
 
 public class Enquete {
     //linha teste
+    //novo teste
     Integer idDaEnquete;
     public String nomeDaEnquete;
     String localDoEvento;
